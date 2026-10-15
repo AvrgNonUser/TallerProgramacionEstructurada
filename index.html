@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comparativa de Caché entre Base de Datos (Spring Boot & SQL Server)</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+<body class="bg-gray-100 font-sans p-8">
+<div class="max-w-xl mx-auto bg-white p-8 rounded-2xl shadow-lg border border-gray-200">
+    <h1 class="text-2xl font-bold text-gray-800 mb-2">Prueba de Rendimiento con Caché</h1>
+    <p class="text-gray-600 mb-6 text-sm">Este panel ejecuta una consulta de 50,000 registros para contrastar el acceso directo a SQL Server frente a la recuperación desde memoria caché.</p>
+
+    <button onclick="ejecutarComparativa()" id="btnProbar" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-xl shadow-md transition duration-200 cursor-pointer">
+        Ejecutar Comparativa de Tiempos
+    </button>
+
+    <div id="loading" class="hidden text-center my-4 text-indigo-600 font-medium animate-pulse">
+        Consultando registros y midiendo tiempos...
+    </div>
+
+    <div id="resultado" class="mt-6 hidden bg-gray-50 p-5 rounded-xl border border-gray-200 space-y-3">
+        <h2 class="font-bold text-gray-700 border-b pb-2">Resultados de la Prueba:</h2>
+        <p class="flex justify-between"><span>Total Registros:</span> <span id="numRegistros" class="font-semibold text-gray-800">-</span></p>
+        <p class="flex justify-between"><span>Tiempo sin Caché (BD):</span> <span id="tiempoSin" class="text-red-600 font-bold">-</span> ms</p>
+        <p class="flex justify-between"><span>Tiempo con Caché (RAM):</span> <span id="tiempoCon" class="text-green-600 font-bold">-</span> ms</p>
+        <p class="flex justify-between border-t pt-2"><span>Mejora de Rendimiento:</span> <span id="mejora" class="text-blue-600 font-bold">-</span></p>
+    </div>
+</div>
+
+<script>
+    async function ejecutarComparativa() {
+        const btn = document.getElementById('btnProbar');
+        const loading = document.getElementById('loading');
+        const resultado = document.getElementById('resultado');
+
+        btn.disabled = true;
+        loading.classList.remove('hidden');
+        resultado.classList.add('hidden');
+
+        try {
+            const response = await fetch('http://localhost:8080/api/registros/comparar');
+            if (!response.ok) throw new Error('Error en la respuesta del servidor');
+
+            const data = await response.json();
+
+            document.getElementById('numRegistros').innerText = data.totalRegistros.toLocaleString();
+            document.getElementById('tiempoSin').innerText = data.tiempoSinCacheMs + ' ms';
+            document.getElementById('tiempoCon').innerText = data.tiempoConCacheMs + ' ms';
+            document.getElementById('mejora').innerText = data.mejoraPorcentaje;
+
+            resultado.classList.remove('hidden');
+        } catch (error) {
+            alert('No se pudo conectar con el backend. Verifica que Spring Boot esté ejecutándose en http://localhost:8080');
+            console.error(error);
+        } finally {
+            btn.disabled = false;
+            loading.classList.add('hidden');
+        }
+    }
+</script>
+</body>
+</html>
